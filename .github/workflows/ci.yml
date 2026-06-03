@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    name: ShellCheck & syntax
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: ShellCheck
+        run: |
+          shellcheck -S warning install.sh uninstall.sh \
+            bin/upsentry bin/upsentry-notify.sh bin/upsentry-sessions.sh \
+            bin/upsentry-shutdown.sh notifiers/*.sh
+
+      - name: Bash syntax
+        run: |
+          for f in install.sh uninstall.sh bin/* notifiers/*; do
+            bash -n "$f"
+          done
+
+  smoke:
+    name: Event pipeline smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fire ONBATT/ONLINE through the hook (no notifiers)
+        run: |
+          mkdir -p /tmp/smoke
+          cat > /tmp/smoke/conf <<'EOF'
+          UPS_NAME="ciups"
+          NOTIFIERS=""
+          LOG_FILE="/tmp/smoke/log"
+          STATE_DIR="/tmp/smoke/state"
+          SESSION_NOTIFY_ENABLED="no"
+          EOF
+          export UPSENTRY_CONFIG=/tmp/smoke/conf
+          NOTIFYTYPE=ONBATT  bin/upsentry-notify.sh
+          sleep 2
+          NOTIFYTYPE=ONLINE  bin/upsentry-notify.sh
+          grep -q 'event=ONBATT' /tmp/smoke/log
+          grep -q 'outage lasted 2s' /tmp/smoke/log
+          test -f /tmp/smoke/state/events.csv
+          echo "pipeline OK:"; cat /tmp/smoke/log
+
+      - name: Dry-run shutdown hook
+        run: |
+          printf 'SNAPSHOT_TMUX="no"\nLOG_FILE="/tmp/smoke/log"\n' > /tmp/smoke/conf
+          UPSENTRY_CONFIG=/tmp/smoke/conf UPSENTRY_DRY_RUN=1 bin/upsentry-shutdown.sh
