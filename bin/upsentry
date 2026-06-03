@@ -1,0 +1,84 @@
+#!/bin/bash
+#
+# upsentry -- small CLI for UPSentry.
+#
+#   upsentry status              service + live UPS readings
+#   upsentry test [onbatt|online|lowbatt|fsd]
+#                                fire a real notification for that event
+#   upsentry log [N]             show last N log lines (default 20)
+#   upsentry stats               outage history & totals
+#   upsentry simulate-shutdown   dry-run the shutdown hook (no halt)
+#   upsentry version
+#
+# Part of UPSentry — https://github.com/cankirca/upsentry
+
+VERSION="1.0.0"
+CONFIG="${UPSENTRY_CONFIG:-/etc/upsentry/upsentry.conf}"
+LIB_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
+
+die() { echo "upsentry: $*" >&2; exit 1; }
+
+# shellcheck source=/dev/null
+need_config() { [ -r "$CONFIG" ] || die "config not readable: $CONFIG (run as root?)"; . "$CONFIG"; }
+
+cmd="${1:-help}"
+case "$cmd" in
+    status)
+        need_config
+        echo "── service ──────────────────────────────"
+        systemctl is-active nut-monitor >/dev/null 2>&1 \
+            && echo "nut-monitor: active" || echo "nut-monitor: NOT active"
+        echo "── ${UPS_NAME}@${NUT_HOST} ──"
+        if out="$(timeout 8 upsc "${UPS_NAME}@${NUT_HOST}" 2>/dev/null)"; then
+            echo "$out" | grep -E \
+                '^(ups\.status|ups\.load|battery\.charge|battery\.runtime|input\.voltage|output\.voltage|device\.model|device\.mfr):'
+        else
+            echo "cannot reach NUT master at ${NUT_HOST} (is upsd running / allowed?)"
+        fi
+        ;;
+    test)
+        [ "$(id -u)" -eq 0 ] || die "run as root: sudo upsentry test ..."
+        ev="$(echo "${2:-onbatt}" | tr '[:lower:]' '[:upper:]')"
+        case "$ev" in ONBATT|ONLINE|LOWBATT|FSD) ;; *) die "unknown event: $ev" ;; esac
+        echo "Firing $ev notification (sends REAL notifications)..."
+        NOTIFYTYPE="$ev" "$LIB_DIR/bin/upsentry-notify.sh"
+        need_config
+        echo "── last log lines ──"
+        tail -n 3 "${LOG_FILE:-/var/log/upsentry.log}"
+        ;;
+    log)
+        need_config
+        tail -n "${2:-20}" "${LOG_FILE:-/var/log/upsentry.log}"
+        ;;
+    stats)
+        need_config
+        CSV="${STATE_DIR:-/var/lib/upsentry}/events.csv"
+        [ -s "$CSV" ] || die "no events recorded yet ($CSV)"
+        echo "── outage history ───────────────────────"
+        awk -F, '
+            $2=="ONBATT" { outages++ }
+            $2=="ONLINE" && $3!="" { total+=$3; n++;
+                if ($3>max) { max=$3; maxd=$1 } }
+            { last=$1" "$2 }
+            END {
+                printf "power-loss events : %d\n", outages
+                if (n) {
+                    printf "measured outages  : %d\n", n
+                    printf "total downtime    : %dm %ds\n", total/60, total%60
+                    printf "average outage    : %ds\n", total/n
+                    printf "longest outage    : %ds (%s)\n", max, maxd
+                }
+                printf "last event        : %s\n", last
+            }' "$CSV"
+        ;;
+    simulate-shutdown)
+        [ "$(id -u)" -eq 0 ] || die "run as root: sudo upsentry simulate-shutdown"
+        UPSENTRY_DRY_RUN=1 "$LIB_DIR/bin/upsentry-shutdown.sh"
+        ;;
+    version)
+        echo "UPSentry $VERSION"
+        ;;
+    help|--help|-h|*)
+        sed -n '3,12p' "$0" | sed 's/^# \{0,1\}//'
+        ;;
+esac
