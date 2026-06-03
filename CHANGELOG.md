@@ -4,6 +4,7 @@
 
 - Event hooks: executable scripts in `hooks.d/<event>/` run on every
   power event with the rendered message as `$1`
+- `MSG_LANG` built-in language presets for default messages (en, tr)
 
 ## 1.0.0 — 2026-06-03
 
