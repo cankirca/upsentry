@@ -1,0 +1,12 @@
+# Real configuration with credentials — never commit
+upsentry.conf
+
+# Logs / state
+*.log
+events.csv
+
+# Backups & editor leftovers
+*.bak
+*.bak.*
+*~
+.DS_Store
