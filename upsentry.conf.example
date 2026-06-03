@@ -70,6 +70,15 @@ SNAPSHOT_TMUX="yes"            # save a tmux session map before halting
 # uses SESSION_USER above; snapshot lands in that user's home
 
 # ------------------------------------------------------------
+# Custom event hooks (optional).
+# Drop executable scripts into <HOOKS_DIR>/<event>/ (onbatt, online,
+# lowbatt, fsd) and they run with the rendered message as $1.
+#   e.g. /etc/upsentry/hooks.d/onbatt/pause-downloads.sh
+# Failures are logged and never block notifications.
+# ------------------------------------------------------------
+HOOKS_DIR="/etc/upsentry/hooks.d"
+
+# ------------------------------------------------------------
 # Logging / state
 # ------------------------------------------------------------
 LOG_FILE="/var/log/upsentry.log"

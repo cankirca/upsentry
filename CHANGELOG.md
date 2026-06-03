@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Event hooks: executable scripts in `hooks.d/<event>/` run on every
+  power event with the rendered message as `$1`
+
 ## 1.0.0 — 2026-06-03
 
 First public release. 🎉
