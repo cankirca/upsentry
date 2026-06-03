@@ -38,16 +38,18 @@ WEBHOOK_URL=""                 # message is POSTed as the request body
 WEBHOOK_CONTENT_TYPE="text/plain"
 
 # ------------------------------------------------------------
-# Messages.  Placeholders:
+# Messages.
+# MSG_LANG picks a built-in preset for all defaults: en | tr
+# Any MSG_* you set below overrides the preset.  Placeholders:
 #   {date}      event time (DATE_FORMAT below)
 #   {duration}  outage length, filled on power-restore
 #   {ups}       UPS identifier
-# Write them in any language you like.
 # ------------------------------------------------------------
-MSG_ONBATT="Power outage started: {date}"
-MSG_ONLINE="Power restored: {date} (outage lasted {duration})"
-MSG_LOWBATT="UPS battery LOW — systems will shut down soon ({date})"
-MSG_FSD="UPS critical — shutting down now ({date})"
+MSG_LANG="en"
+#MSG_ONBATT="Power outage started: {date}"
+#MSG_ONLINE="Power restored: {date} (outage lasted {duration})"
+#MSG_LOWBATT="UPS battery LOW — systems will shut down soon ({date})"
+#MSG_FSD="UPS critical — shutting down now ({date})"
 
 DATE_FORMAT="%d.%m.%Y %H:%M:%S"
 

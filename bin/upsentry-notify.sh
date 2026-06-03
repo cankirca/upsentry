@@ -37,10 +37,21 @@ mkdir -p "$STATE_DIR" 2>/dev/null
 
 # Default message templates (kept in plain variables: putting "{date}" inside
 # a ${VAR:-default} expansion trips bash's brace matching).
-DEF_ONBATT='Power outage started: {date}'
-DEF_ONLINE='Power restored: {date} (outage lasted {duration})'
-DEF_LOWBATT='UPS battery LOW: {date}'
-DEF_FSD='UPS critical, shutting down: {date}'
+# MSG_LANG selects a built-in preset; explicit MSG_* settings always win.
+case "${MSG_LANG:-en}" in
+    tr)
+        DEF_ONBATT='Elektrik kesintisi basladi: {date}'
+        DEF_ONLINE='Elektrik geldi: {date} (kesinti suresi: {duration})'
+        DEF_LOWBATT='UPS akusu ZAYIF, sistemler yakinda kapanacak: {date}'
+        DEF_FSD='UPS kritik, sistem simdi kapaniyor: {date}'
+        ;;
+    *)
+        DEF_ONBATT='Power outage started: {date}'
+        DEF_ONLINE='Power restored: {date} (outage lasted {duration})'
+        DEF_LOWBATT='UPS battery LOW: {date}'
+        DEF_FSD='UPS critical, shutting down: {date}'
+        ;;
+esac
 
 DURATION=""
 DURATION_SECS=""

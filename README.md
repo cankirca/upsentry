@@ -119,13 +119,12 @@ The annotated reference is [`upsentry.conf.example`](upsentry.conf.example). Hig
 # Which channels fire on power events (space/comma separated)
 NOTIFIERS="netgsm telegram"
 
-# Messages are templates — write them in your language
+# Built-in language presets for all messages: en | tr
+MSG_LANG="tr"
+
+# ...or write your own templates in any language (these override the preset)
 MSG_ONBATT="Power outage started: {date}"
 MSG_ONLINE="Power restored: {date} (outage lasted {duration})"
-
-# Example: Turkish
-# MSG_ONBATT="Evde elektrik kesintisi basladi: {date}"
-# MSG_ONLINE="Elektrik geldi: {date} (kesinti süresi: {duration})"
 
 # Warn AI coding sessions in tmux on power loss
 SESSION_NOTIFY_ENABLED="yes"
