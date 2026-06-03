@@ -170,6 +170,22 @@ The event message is POSTed to `WEBHOOK_URL` as the request body.
 </details>
 
 <details>
+<summary><b>🪝 Event hooks (run anything on power events)</b></summary>
+
+Drop an executable script into `/etc/upsentry/hooks.d/<event>/`
+(`onbatt`, `online`, `lowbatt`, `fsd`) and it runs with the rendered
+message as `$1` — pause your downloads, dim your lights, stop a VM:
+
+```bash
+# /etc/upsentry/hooks.d/onbatt/pause-qbittorrent.sh
+#!/bin/bash
+curl -s -X POST "http://127.0.0.1:8080/api/v2/torrents/pause" -d "hashes=all"
+```
+
+Hook failures are logged but never block notifications or each other.
+</details>
+
+<details>
 <summary><b>🧩 Write your own notifier</b></summary>
 
 Drop an executable script into `/opt/upsentry/notifiers/myservice.sh`:

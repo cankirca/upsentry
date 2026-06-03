@@ -101,6 +101,21 @@ for n in ${NOTIFIERS//,/ }; do
 done
 [ -z "${NOTIFIERS// /}" ] && log "no notifiers configured | msg=${MSG}"
 
+# User hooks: drop executable scripts into $HOOKS_DIR/<event>/ and they run
+# with the rendered message as $1.  Failures are logged, never fatal.
+HOOKS_DIR="${HOOKS_DIR:-/etc/upsentry/hooks.d}"
+hook_dir="$HOOKS_DIR/${EVENT,,}"
+if [ -d "$hook_dir" ]; then
+    for hook in "$hook_dir"/*; do
+        [ -x "$hook" ] || continue
+        if "$hook" "$MSG" >/dev/null 2>&1; then
+            log "hook=$(basename "$hook") ok"
+        else
+            log "hook=$(basename "$hook") FAILED (ignored)"
+        fi
+    done
+fi
+
 # ONBATT only: best-effort warning to matching tmux sessions.
 # Runs as SESSION_USER; config values are passed via env so the
 # credential-holding config never needs to be readable by that user.
