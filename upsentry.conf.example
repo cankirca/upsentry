@@ -1,0 +1,76 @@
+# ============================================================
+#  UPSentry configuration
+#  Copy to /etc/upsentry/upsentry.conf and edit.
+#  KEEP THIS FILE PRIVATE:  chmod 600 /etc/upsentry/upsentry.conf
+# ============================================================
+
+# ------------------------------------------------------------
+# UPS connection (your NUT master / server)
+# Works with any NUT server: ASUSTOR, Synology, QNAP, TrueNAS,
+# a Linux box running nut-server, Windows NUT, etc.
+# ------------------------------------------------------------
+UPS_NAME="ups"                 # UPS name as defined on the NUT master
+NUT_HOST="192.168.1.50"        # IP / hostname of the NUT master
+NUT_USER="upsmon"              # NUT username (slave/secondary account)
+NUT_PASSWORD="changeme"        # NUT password
+
+# ------------------------------------------------------------
+# Notifiers — space or comma separated list.
+# Available: netgsm, telegram, webhook
+# Leave empty to log events only.
+# ------------------------------------------------------------
+NOTIFIERS="netgsm"
+
+# --- NetGSM SMS (https://www.netgsm.com.tr) -----------------
+NETGSM_USERCODE=""             # subscriber number / API user
+NETGSM_PASSWORD=""             # API password
+NETGSM_HEADER=""               # approved sender title (msgheader)
+NETGSM_GSMNO=""                # recipient, 5xxxxxxxxx (10 digits)
+NETGSM_DIL="TR"                # TR keeps Turkish characters
+NETGSM_FILTER="0"              # IYS commercial filter (0 = personal)
+
+# --- Telegram bot --------------------------------------------
+TELEGRAM_BOT_TOKEN=""          # from @BotFather
+TELEGRAM_CHAT_ID=""            # your chat / group id
+
+# --- Generic webhook (ntfy, Slack, Discord, Home Assistant…) -
+WEBHOOK_URL=""                 # message is POSTed as the request body
+WEBHOOK_CONTENT_TYPE="text/plain"
+
+# ------------------------------------------------------------
+# Messages.  Placeholders:
+#   {date}      event time (DATE_FORMAT below)
+#   {duration}  outage length, filled on power-restore
+#   {ups}       UPS identifier
+# Write them in any language you like.
+# ------------------------------------------------------------
+MSG_ONBATT="Power outage started: {date}"
+MSG_ONLINE="Power restored: {date} (outage lasted {duration})"
+MSG_LOWBATT="UPS battery LOW — systems will shut down soon ({date})"
+MSG_FSD="UPS critical — shutting down now ({date})"
+
+DATE_FORMAT="%d.%m.%Y %H:%M:%S"
+
+# ------------------------------------------------------------
+# Terminal-session warning (optional).
+# On power loss, UPSentry can type a warning into tmux/byobu
+# panes that run an AI coding agent (Claude Code, aider, …) so
+# the agent saves its state before a possible shutdown.
+# Panes that do NOT match the pattern are never touched.
+# ------------------------------------------------------------
+SESSION_NOTIFY_ENABLED="no"
+SESSION_USER=""                # user owning the tmux server, e.g. devuser
+SESSION_PROCESS_PATTERN="claude"   # case-insensitive match on pane processes
+SESSION_MESSAGE="Power outage! Running on UPS battery. Please save your current progress now."
+
+# ------------------------------------------------------------
+# Shutdown behaviour (when the NUT master orders a shutdown)
+# ------------------------------------------------------------
+SNAPSHOT_TMUX="yes"            # save a tmux session map before halting
+# uses SESSION_USER above; snapshot lands in that user's home
+
+# ------------------------------------------------------------
+# Logging / state
+# ------------------------------------------------------------
+LOG_FILE="/var/log/upsentry.log"
+STATE_DIR="/var/lib/upsentry"  # outage timestamps + events.csv history
